@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+
+  <head>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="Trabalho Prático de Interoperabilidade Semântica">
+    <meta name="author" content="Bruno Pereira e Maria Ana de Brito">
+
+    <title>IS</title>
+
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <link href="css/full-width-pics.css" rel="stylesheet">
+
+  </head>
+
+  <body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark fixed-top">
+      <div class="container">
+        <a class="navbar-brand" href="#">Search an ORCID!</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarResponsive" aria-controls="navbarResponsive" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarResponsive">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Home
+                <span class="sr-only">(current)</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#what">What is ORCID?</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#why">Why use ORCID?</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#search">Search</a>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+    <header class="py-5 bg-image-full" style="background-image: url('.\\transferir.jpg');">
+      <img class="rounded-circle d-block mx-auto" src=".\logo.jpg" alt="" >
+    </header>
+
+    <section class="py-5" id="what">
+      <div class="container">
+        <h1>What is ORCID?</h1>
+        <p class="lead">ORCID is a non-profit organization supported by a global community of organizational members, including research organizations, publishers, funders, professional associations, and other stakeholders in the research ecosystem. We aim to help create a world in which all who participate in research, scholarship and innovation are uniquely identified and connected to their contributions and affiliations, across disciplines, borders, and time.</p>
+      </div>
+    </section>
+
+    <section class="py-5 bg-image-full" style="background-image: url('.\\segundaimagem.jpg');">
+      <div style="height: 200px;"></div>
+    </section>
+
+    <section class="py-5" id="why">
+      <div class="container">
+        <h1>Why use ORCID?</h1>
+        <p class="lead">ORCID provides a persistent digital identifier that distinguishes you from every other researcher and, through integration in key research workflows such as manuscript and grant submission, supports automated linkages between you and your professional activities ensuring that your work is recognized.</p>
+      </div>
+    </section>
+
+    <section class="py-5" id="search">
+      <div class="container">
+        <h3>Curious about publications of one of our members? Search it out!</h3>
+        <textarea id="orcid" placeholder="Type your ORCID IDs here. Separate them with commas" cols="65" rows="1" wrap="virtual"></textarea>
+      </div>
+    </section>
+    </br>
+
+    <div class="text-center">
+      <input type="button" class="btn btn-primary btn-info" style="text-align: center;background-color:#338caf;border:2px solid #338caf;" onclick="CreateTableFromJSON()" value="Search Publications" />
+    </div>
+
+  </br></br>
+    <div id="showWorks"></div>
+    <div id="showScopus"></div>
+    
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <footer class="py-5 bg-dark">
+      <div class="container">
+        <p class="m-0 text-center text-white">Interoperabilidade Semântica - Bruno Pereira (a75135) e Maria Ana de Brito (a73580)</p>
+      </div>
+    </footer>
+
+  </body>
+  <script>
+    function createXML(orcids) {
+      var orcid_list = orcids.split(",");
+      var xml = "<orcids>";
+      for(var i = 0; i < orcid_list.length; i++) {
+        xml = xml.concat("<orcid>");
+        xml = xml.concat(orcid_list[i]);
+        xml = xml.concat("</orcid>");
+      }
+      xml = xml.concat("</orcids>");
+      return xml;
+    }
+
+      function CreateTableFromJSON() {
+        var orcids = createXML(document.getElementById("orcid").value);
+        
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", "http://25.46.13.163:8080/IS/pack/webservice/orcids"); 
+
+        xhr.addEventListener("readystatechange", function () {
+          if (this.readyState === 4 && this.status == "200") {
+            var actual_JSON = JSON.parse(xhr.responseText);
+            
+            tableCreation(actual_JSON);
+          }
+        });
+
+        xhr.setRequestHeader("content-type", "application/json");
+        xhr.setRequestHeader("cache-control", "no-cache");
+        xhr.setRequestHeader("postman-token", "73c7a4c3-400e-6b41-a669-e5b2370ac3ab");
+        xhr.send(orcids);
+      }
+
+        
+        function tableCreation(works){
+
+          var colORCID = [];
+          var colSCOPUS = [];
+          var lengthORCID = 6;
+
+          for (var i = 0; i < works.length; i++) {
+            for (var key in works[i]) {
+              if(key != "Number of Citations" && key !="Number of Citations in the last 3 years" && key != "Authors") {
+                if (colORCID.indexOf(key) === -1) {
+                        colORCID.push(key);
+                    } 
+              }
+              else {
+                if (colSCOPUS.indexOf(key) === -1) {
+                        colSCOPUS.push(key);
+                    }
+              }
+                }
+          }
+
+          var tableORCID = document.createElement("table");
+          
+          var trORCID = tableORCID.insertRow(-1);           
+         
+          
+          for (var i = 0; i < colORCID.length; i++) {
+              var th = document.createElement("th");     
+              th.innerHTML = colORCID[i];
+              trORCID.appendChild(th);
+          }
+          
+
+          for (var i = 0; i < works.length; i++) {
+            trORCID = tableORCID.insertRow(-1);
+            
+              for (var j = 0; j < colORCID.length; j++) {
+                  var tabCell = trORCID.insertCell(-1);
+
+                  if(works[i][colORCID[j]] == "" || works[i][colORCID[j]] == -1)
+                    tabCell.innerHTML = "--"
+                  else {
+                      if(colORCID[j] == "EID") {
+                        var createA = document.createElement('a');
+                        var createAText = document.createTextNode(works[i][colORCID[j]]);
+                        modal = document.createElement("div");
+
+                        modal.id = works[i][colORCID[j]];
+                        modal.setAttribute("class", "modal");
+                        
+
+                        document.body.appendChild(modal);
+                        //console.log(document.body);
+                        createA.setAttribute('data-toggle', 'modal');
+                        createA.setAttribute('href', "#"+works[i][colORCID[j]]);
+                        createA.appendChild(createAText);
+
+                        tabCell.appendChild(createA);
+                        createTableScopus(works[i][colORCID[j]], colSCOPUS, colORCID, works, works[i][colORCID[0]]);
+                      }
+                      else tabCell.innerHTML = works[i][colORCID[j]];
+                     }
+              }
+          }
+
+          var divContainer = document.getElementById("showWorks");
+          divContainer.innerHTML = "";
+          tableORCID.setAttribute('class', 'table table-hover');
+          divContainer.appendChild(tableORCID);
+      }
+
+      function createTableScopus(eid, colSCOPUS, colORCID, works, orcid) {
+        var tableSCOPUS = document.createElement("table");
+        tableSCOPUS.setAttribute('class', 'table');
+        tableSCOPUS.id = eid;
+      var trSCOPUS = tableSCOPUS.insertRow(-1);
+
+      for (var i = 0; i < colSCOPUS.length; i++) {
+              var th = document.createElement("th");     
+              th.innerHTML = colSCOPUS[i];
+          trSCOPUS.appendChild(th);
+      }
+
+      trSCOPUS = tableSCOPUS.insertRow(-1);
+          for (var i = 0; i < works.length; i++) {        
+              for (var j = 0; j < colSCOPUS.length; j++) {
+
+                if(works[i][colORCID[6]] == eid && works[i][colORCID[0]] == orcid) { 
+                    if(works[i][colSCOPUS[j]] != "" && works[i][colSCOPUS[j]] != -1 && works[i][colSCOPUS[j]] != [] ) {
+                      var tabCell = trSCOPUS.insertCell(-1);
+                      tabCell.innerHTML = works[i][colSCOPUS[j]];
+                    }
+                    else {
+                      var tabCell = trSCOPUS.insertCell(-1);
+                      tabCell.innerHTML = "--";
+                    }
+                  }
+              }
+          }
+          var tabCell = trSCOPUS.insertCell(-1);
+          
+
+      var divScopus2 = document.getElementById(eid);
+
+      divScopus2.innerHTML = "";
+
+      var divScopus = document.createElement("div");
+      divScopus.setAttribute("class", "modal-dialog");
+
+      divScopus4 = document.createElement("div");
+      divScopus4.setAttribute("class", "modal-content");
+
+      divScopus3 = document.createElement("div");
+      divScopus3.setAttribute("class", "modal-body");
+      divScopus3.appendChild(tableSCOPUS);
+      divScopus4.appendChild(divScopus3);
+    
+      divScopus.appendChild(divScopus4);
+      divScopus2.appendChild(divScopus);
+      }
+  </script>
+</html>
